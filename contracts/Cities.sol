@@ -66,11 +66,11 @@ contract Cities is ERC721 {
     /// @notice Efficiently compute the hash of a single bytes32 value
     /// @dev Without this we'd probably have to use abi.encodePacked, which costs a significant amount of gas (unless the optimizer recognizes what we want)
     /// @param value The bytes32 value to be hashed
-    /// @return hash The hashed value
-    function _keccak256(bytes32 value) private pure returns (bytes32 hash) {
+    /// @return hashed The hashed value
+    function _keccak256(bytes32 value) private pure returns (bytes32 hashed) {
         assembly {
             mstore(0x00, value)
-            hash := keccak256(0x00, 0x20)
+            hashed := keccak256(0x00, 0x20)
         }
     }
 

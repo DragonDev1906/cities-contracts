@@ -69,7 +69,7 @@ describe("Cities contract", () => {
         })
 
         allVariations.forEach(([name, accountIndex]) => {
-            // This should be done ith formal verification
+            // This should be done with formal verification
             it(`Does not allow ${name} to mint wrong cities`, async () => {
                 const signer = accounts[accountIndex]
                 await expect(

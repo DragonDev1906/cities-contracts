@@ -55,7 +55,7 @@ contract Cities is ERC721, AccessControl {
     function _mintCity(address to, bytes32 data, bytes32[] calldata proof) internal {
         // Make sure a city with this data exists (note: this is only secure for len(_data)<=32  and len(_data)>64)
         bool validProof = MerkleProof.verify(proof, dataRootHash, _keccak256(data));
-        require(validProof, "Invalid _data");
+        require(validProof, "Invalid data");
 
         // Parse and store city data
         uint256 tokenId = (uint256(data) >> TOKENID_SHIFT) & TOKENID_MASK;

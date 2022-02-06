@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 
 /*
@@ -29,7 +30,9 @@ struct CityData {
 uint256 constant TOKENID_MASK  = 0x00FFFFFF;
 uint256 constant TOKENID_SHIFT = 224;
 
-contract Cities is ERC721 {
+contract Cities is ERC721, AccessControl {
+    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
+
     /// @dev Store the MerkleTree root used for checking city existance and data integrity when minting. TODO: changing this to a constant should reduce the gas cost of _mintCity by about 2100 (gas cost of SLOAD since EIP-2929, Berlin)
     bytes32 dataRootHash;
 
@@ -41,6 +44,7 @@ contract Cities is ERC721 {
     /// @param _dataRootHash root of the MerkleTree used in _mintCity for chekcing existance and integrity of city data
     constructor(bytes32 _dataRootHash) ERC721("Cities", "CITY") {
         dataRootHash = _dataRootHash;
+        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
     /// @notice Mint a city ERC721 token using the tokenID stored in _data
@@ -75,16 +79,24 @@ contract Cities is ERC721 {
     }
 
     /// @notice Mint a (specific) city with the tokenId in data
-    /// @dev For now this is sufficient. TODO This function will need a limitation such that it can only be called by a CitySale contract that requires payment (Split due to Separation of Concerns)
+    /// @dev Can only be called by someone with the MINTER_ROLE (i.e. the sale contract)
+    /// @param to The receiver of the token
     /// @param data The data of the city to be minted (includes the tokenId)
     /// @param proof Proof that a city with this data exists
-    function mintCity(bytes32 data, bytes32[] calldata proof) external {
-        _mintCity(msg.sender, data, proof);
+    function mintCity(address to, bytes32 data, bytes32[] calldata proof) external onlyRole(MINTER_ROLE) {
+        _mintCity(to, data, proof);
     }
 
     function getCityData(uint256 tokenId) external view returns(uint8 _size, uint24 _level, uint224 _neighborInfo) {
         _size = cityData[tokenId].size;
         _level = cityData[tokenId].level;
         _neighborInfo = cityData[tokenId].neighborInfo;
+    }
+
+    /// @inheritdoc	ERC721
+    function supportsInterface(bytes4 interfaceId) public view virtual override(AccessControl, ERC721) returns (bool) {
+        return
+            AccessControl.supportsInterface(interfaceId) ||
+            ERC721.supportsInterface(interfaceId);
     }
 }
